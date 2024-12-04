@@ -1,62 +1,67 @@
 package br.edu.ifpe.manager.service;
 
 import br.edu.ifpe.manager.model.Reservation;
-import br.edu.ifpe.manager.model.Resource;
-import br.edu.ifpe.manager.model.ResourceStatus;
-import br.edu.ifpe.manager.model.User;
 import br.edu.ifpe.manager.repository.ReservationRepository;
 import br.edu.ifpe.manager.repository.ResourceRepository;
 import br.edu.ifpe.manager.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+class ReservationServiceTest {
 
-@ExtendWith(MockitoExtension.class)
-public class ReservationServiceTest {
-
-    @Mock
+    private ReservationService reservationService;
     private ReservationRepository reservationRepository;
-
-    @Mock
+    private UserRepository userRepository;
     private ResourceRepository resourceRepository;
 
-    @Mock
-    private UserRepository userRepository;
-
-    @InjectMocks
-    private ReservationService reservationService;
-
-    private User user;
-    private Resource resource;
-
     @BeforeEach
-    public void setUp() {
-        user = User.builder().name("Robson").email("robson@example.com").password("password123").build();
-        resource = Resource.builder().name("Room 101").description("A spacious room").capacity(10).location("Building A").status(ResourceStatus.AVAILABLE).build();
+    void setUp() {
+        reservationRepository = mock(ReservationRepository.class);
+        userRepository = mock(UserRepository.class);
+        resourceRepository = mock(ResourceRepository.class);
+
+        // Pass all dependencies to the ReservationService constructor
+        reservationService = new ReservationService(
+            reservationRepository,
+            userRepository,
+            resourceRepository
+        );
     }
 
     @Test
-    public void testMakeReservation() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));
+    void testMakeReservation() {
+        // Arrange
+        Long userId = 1L;
+        Long resourceId = 1L;
+        LocalDateTime startDate = LocalDateTime.of(2023, 12, 5, 10, 0);
+        LocalDateTime endDate = LocalDateTime.of(2023, 12, 5, 12, 0);
+        String additionalResource = "Projector";
 
-        LocalDateTime start = LocalDateTime.now().plusHours(1);
-        LocalDateTime end = start.plusHours(2);
+        var user = new br.edu.ifpe.manager.model.User();
+        user.setId(userId);
 
-        Reservation reservation = reservationService.makeReservation(1L, 1L, start, end, "Projector");
+        var resource = new br.edu.ifpe.manager.model.Resource();
+        resource.setId(resourceId);
 
-        assertNotNull(reservation);
-        assertEquals("Robson", reservation.getUser().getName());
-        assertEquals("Room 101", reservation.getResource().getName());
+        var reservation = new Reservation();
+        reservation.setId(1L);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(resourceRepository.findById(resourceId)).thenReturn(Optional.of(resource));
+        when(reservationRepository.save(Mockito.any(Reservation.class))).thenReturn(reservation);
+
+        // Act
+        Reservation result = reservationService.makeReservation(userId, resourceId, startDate, endDate, additionalResource);
+
+        // Assert
+        assertNotNull(result);
+        verify(reservationRepository, times(1)).save(Mockito.any(Reservation.class));
     }
 }

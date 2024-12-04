@@ -19,52 +19,60 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 public class ResourceServiceTest {
 
-    @Mock
-    private ResourceRepository resourceRepository;
+	@Mock
+	private ResourceRepository resourceRepository;
 
-    @InjectMocks
-    private ResourceService resourceService;
+	@InjectMocks
+	private ResourceService resourceService;
 
-    private Resource resource;
+	private Resource resource;
 
-    @BeforeEach
-    public void setUp() {
-        resource = Resource.builder()
-                .name("Room 101")
-                .description("A spacious meeting room")
-                .capacity(10)
-                .location("Building A")
-                .status(ResourceStatus.AVAILABLE)
-                .build();
-    }
+	@BeforeEach
+	public void setUp() {
+		resource = Resource.builder()
+				.name("Room 101")
+				.description("A spacious meeting room")
+				.capacity(10)
+				.location("Building A")
+				.status(ResourceStatus.AVAILABLE)
+				.build();
+	}
 
-    @Test
-    public void testCreateResource() {
-        when(resourceRepository.save(resource)).thenReturn(resource);
+	@Test
+	public void testCreateResource() {
+		when(resourceRepository.save(resource)).thenReturn(resource);
 
-        Resource createdResource = resourceService.createResource(resource);
+		Resource createdResource = resourceService.createResource(resource);
 
-        assertNotNull(createdResource);
-        assertEquals("Room 101", createdResource.getName());
-        verify(resourceRepository, times(1)).save(resource);
-    }
+		assertNotNull(createdResource);
+		assertEquals("Room 101", createdResource.getName());
+		verify(resourceRepository, times(1)).save(resource);
+	}
 
-    @Test
-    public void testUpdateResource() {
-        when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));
+	@Test
+	public void testUpdateResource() {
+	    Resource resource = Resource.builder()
+	            .name("Meeting Room")
+	            .description("A room for meetings")
+	            .capacity(10)
+	            .status(ResourceStatus.AVAILABLE)
+	            .location("Floor 1")
+	            .build();
 
-        Resource updatedResource = resourceService.updateResource(1L, resource);
+	    when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));
+	    when(resourceRepository.save(any(Resource.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertNotNull(updatedResource);
-        assertEquals("Room 101", updatedResource.getName());
-    }
+	    Resource updatedResource = resourceService.updateResource(1L, resource);
+	    assertNotNull(updatedResource); // Ensure the updated resource is not null
+	    assertEquals("Meeting Room", updatedResource.getName()); // Validate update
+	}
 
-    @Test
-    public void testDeleteResource() {
-        when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));
+	@Test
+	public void testDeleteResource() {
+		when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));
 
-        resourceService.deleteResource(1L);
+		resourceService.deleteResource(1L);
 
-        verify(resourceRepository, times(1)).delete(resource);
-    }
+		verify(resourceRepository, times(1)).delete(resource);
+	}
 }
